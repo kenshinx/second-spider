@@ -1,7 +1,9 @@
 second-spider
 =============
 
-Another spider powered by gevent,requests,pyquery 
+Another spider, powered by gevent,requests,pyquery 
+
+### Features
 
 1. The concurrency foundation on [gevent](http://www.gevent.org/)
 2. The spider strategy highly configurable:
@@ -15,13 +17,17 @@ Another spider powered by gevent,requests,pyquery
 * just crawl same domain url
 
 
+### Install
+
+* python 2.7
+* gevent
+* requests
+* pyquery
+
+
 ### Usage
 
         spider = Spider()
         spider.setRootUrl("http://www.sina.com.cn")
         spider.run()
 
-### Read more
-
-Please read the code for more details.
-If you are chinese reader, refer to http://blog.kenshinx.me for more details

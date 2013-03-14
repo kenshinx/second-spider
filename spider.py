@@ -255,15 +255,25 @@ class Handler(gevent.Greenlet):
 class TestSpider(unittest.TestCase):
 
     def setUp(self):
-        self.root = UrlObj("http://www.sina.com.cn")
+        self.root = "http://www.sina.com.cn"
+        strategy = Strategy(max_depth=3,max_count=5000,
+                            same_host=False,same_domain=True)
+        self.spider = Spider(strategy)
+        self.spider.setRootUrl(self.root)
+        self.spider.run()
 
-    def testSpider(self):
-        strategy = Strategy(max_depth=5,max_count=50000)
-        spider = Spider(strategy)
-        spider.setRootUrl(self.root)
-        spider.run()
-        self.assertEqual(len(spider.urltable),5000)
-        self.assertLessEqual(spider.urltable.urls[-1].depth,5)
+    def testCount(self):
+        self.assertEqual(len(self.spider.urltable),5000)
+
+    def testMaxDepth(self):
+        self.assertLessEqual(self.spider.urltable.urls[-1].depth,3)
+
+    def testSameDomain(self):
+        for url in self.spider.urltable.urls[100:200]:
+            self.assert_(UrlFilter.isSameDomain(self.root,str(url)))
+
+    def testSameHost(self):
+        pass
 
 
 
