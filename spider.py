@@ -17,8 +17,6 @@ from pyquery import PyQuery
 from util import HtmlAnalyzer,UrlFilter
 
 
-
-
 __all__ = ['Strategy','UrlObj','Spider','HtmlAnalyzer','UrlFilter']
 
 
