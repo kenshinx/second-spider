@@ -15,4 +15,13 @@ Another spider powered by gevent,requests,pyquery
 * just crawl same domain url
 
 
+### Usage
+
+        spider = Spider()
+        spider.setRootUrl("http://www.sina.com.cn")
+        spider.run()
+
+### Read more
+
 Please read the code for more details.
+If you are chinese reader, refer to http://blog.kenshinx.me for more details
