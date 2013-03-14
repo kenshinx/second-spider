@@ -9,12 +9,13 @@ monkey.patch_all()
 import re
 import sys
 import logging
+import unittest
 import urllib
 import urlparse
 import requests
 from pyquery import PyQuery
 
-from util import HtmlAnalyzer,UrlFilter
+from utils import HtmlAnalyzer,UrlFilter
 
 
 __all__ = ['Strategy','UrlObj','Spider','HtmlAnalyzer','UrlFilter']
@@ -31,7 +32,7 @@ class Strategy(object):
         'Accept-Charset': 'GBK,utf-8;q=0.7,*;q=0.3',
     }
 
-    def __init__(self,max_depth=1,max_count=50000,concurrency=5,timeout=10,headers=None,
+    def __init__(self,max_depth=5,max_count=5000,concurrency=5,timeout=10,headers=None,
                         cookies=None,ssl_verify=False,same_host=False,same_domain=True):
         self.max_depth = max_depth
         self.max_count = max_count
@@ -89,7 +90,7 @@ class UrlTable(object):
         return hash(url) in self.__urls.keys()
 
     def __iter__(self):
-        for url in self.urls():
+        for url in self.urls:
             yield url
 
     def insert(self,url):
@@ -160,6 +161,14 @@ class Spider(object):
         self.pool.join()
         self.queue.put(StopIteration)
         return
+
+
+    def dump(self):
+        import StringIO
+        out = StringIO.StringIO()
+        for url in self.urltable:
+            print >> out ,url
+        return out.getvalue()
 
 
 
@@ -243,11 +252,24 @@ class Handler(gevent.Greenlet):
         
 
 
+class TestSpider(unittest.TestCase):
+
+    def setUp(self):
+        self.root = UrlObj("http://www.sina.com.cn")
+
+    def testSpider(self):
+        strategy = Strategy(max_depth=5,max_count=50000)
+        spider = Spider(strategy)
+        spider.setRootUrl(self.root)
+        spider.run()
+        self.assertEqual(len(spider.urltable),5000)
+        self.assertLessEqual(spider.urltable.urls[-1].depth,5)
+
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if "-v" in sys.argv else logging.WARN,
                         format='%(asctime)s %(levelname)s %(message)s')
 
-    spider = Spider()
-    spider.setRootUrl("http://www.sina.com.cn")
-    spider.run()
+    unittest.main()
 
