@@ -1,28 +1,28 @@
 
 g_GTLD_Suffix = {
-# Generic
-    'biz' : None,
-    'com' : None,
+    # Generic
+    'biz': None,
+    'com': None,
     'info': None,
     'name': None,
-    'net' : None,
-    'org' : None,
-    'pro' : None,
-# Sponsored
+    'net': None,
+    'org': None,
+    'pro': None,
+    # Sponsored
     'aero': None,
     'asia': None,
-    'cat' : None,
+    'cat': None,
     'coop': None,
-    'edu' : None,
-    'gov' : None,
-    'int' : None,
+    'edu': None,
+    'gov': None,
+    'int': None,
     'jobs': None,
-    'mil' : None,
+    'mil': None,
     'mobi': None,
     'museum': None,
-    'tel' : None,
+    'tel': None,
     'travel':  None,
-# Infrastructure
+    # Infrastructure
     'arpa': None
 }
 
@@ -35,14 +35,14 @@ g_GTLD_Other_Suffix = {
 }
 
 g_CCTLD_CN_Suffix = {
-    'ac' : None,
+    'ac': None,
     'com': None,
     'edu': None,
     'gov': None,
     'net': None,
     'org': None,
     'mil': None,
-# geographic names
+    # geographic names
     'ah': None,
     'bj': None,
     'cq': None,
@@ -160,7 +160,7 @@ def GetFirstLevelDomain(host):
         pos -= 1
         if hostMembers[-2] in g_CCTLD_MO_Suffix:
             pos -= 1
-    elif (size==4) and IsNumStr(hostMembers[-1]):
+    elif (size == 4) and IsNumStr(hostMembers[-1]):
         pos = 0
     else:
         pos = size
@@ -175,4 +175,3 @@ def GetFirstLevelDomain(host):
 if __name__ == '__main__':
     import sys
     print GetFirstLevelDomain(sys.argv[1])
-
