@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import unittest
 
 # From http://www.iana.org/domains/root/db
 GENERAL_TLD = ['com','edu','gov','net','org','mil','travel','aero',
@@ -37,11 +38,38 @@ def GetFirstLevelDomain(raw_host=""):
         else:
             rev = rev[:2]
     else:
-        raise ValueError('Not valid domain')
+        return None
 
     return ".".join(rev[::-1])
 
 
+class DomainTest(unittest.TestCase):
+   
+    def test_base_function(self):
+        self.assertEqual(GetFirstLevelDomain('www.google.com'), 'google.com')
+
+    def test_g_tld(self):
+        tlds = ['subdomain.china.asia',
+                '4th.www.float.int',
+                'e.pypi.python.org']
+
+        match = ['china.asia','float.int','python.org']
+
+        self.assertEquals([GetFirstLevelDomain(t) for t in tlds], match)
+
+    def test_special_cctld(self):
+
+        self.assertEqual(GetFirstLevelDomain('www.gx.cn'), 'www.gx.cn')
+
+    def test_cjk_domain(self):
+        
+        self.assertEqual(GetFirstLevelDomain('www.g.中国'), 'g.中国')
+
+    def test_domain_with_port(self):
+        self.assertEqual(GetFirstLevelDomain('del.icio.us:8080'), 'icio.us')
+
+    def test_bad_domain(self):
+        self.assertIsNone(GetFirstLevelDomain('i-am.b_ad.domain'))
+
 if __name__ == '__main__':
-    import sys
-    print GetFirstLevelDomain(sys.argv[1])
+    unittest.main()
