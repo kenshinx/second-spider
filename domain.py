@@ -1,175 +1,45 @@
+# -*- coding: utf-8 -*-
 
-g_GTLD_Suffix = {
-    # Generic
-    'biz': None,
-    'com': None,
-    'info': None,
-    'name': None,
-    'net': None,
-    'org': None,
-    'pro': None,
-    # Sponsored
-    'aero': None,
-    'asia': None,
-    'cat': None,
-    'coop': None,
-    'edu': None,
-    'gov': None,
-    'int': None,
-    'jobs': None,
-    'mil': None,
-    'mobi': None,
-    'museum': None,
-    'tel': None,
-    'travel':  None,
-    # Infrastructure
-    'arpa': None
-}
+# From http://www.iana.org/domains/root/db
+GENERAL_TLD = ['com','edu','gov','net','org','mil','travel','aero',
+               'asia','cat','coop','int','jobs','mobi','museum','post',
+               'tel','xxx','pro','arpa']
 
-g_GTLD_Other_Suffix = {
-    'cc': None,
-    'tv': None,
-    'tm': None,
-    'cd': None,
-    'li': None
-}
+REGOIN_TLD  = { "cn": ['xj', 'sh', 'ac', 'gs', 'zj', 'yn', 'ah', 'gz', 
+                       'bj', 'gx', 'jl', 'hk', 'gd', 
+                       'hn', 'hl', 'edu', 'hb', 'cq', 'ha', 'fj', 'he',
+                       'xz', 'sx', 'jx','ln', 'tw', 
+                       'mo', 'js', 'nx', 'hi', 'tj', 'sn', 'nm', 'sc', 'qh',
+                       'sd'],
+                "tw": ['idv','game','club','ebiz'],
+                "hk": ['idv'],
+                }
 
-g_CCTLD_CN_Suffix = {
-    'ac': None,
-    'com': None,
-    'edu': None,
-    'gov': None,
-    'net': None,
-    'org': None,
-    'mil': None,
-    # geographic names
-    'ah': None,
-    'bj': None,
-    'cq': None,
-    'fj': None,
-    'gd': None,
-    'gs': None,
-    'gz': None,
-    'gx': None,
-    'ha': None,
-    'hb': None,
-    'he': None,
-    'hi': None,
-    'hl': None,
-    'hn': None,
-    'jl': None,
-    'js': None,
-    'jx': None,
-    'ln': None,
-    'nm': None,
-    'nx': None,
-    'qh': None,
-    'sc': None,
-    'sd': None,
-    'sh': None,
-    'sn': None,
-    'sx': None,
-    'tj': None,
-    'xj': None,
-    'xz': None,
-    'yn': None,
-    'zj': None,
-    'hk': None,
-    'mo': None,
-    'tw': None
-}
+def GetFirstLevelDomain(raw_host=""):
 
-g_CCTLD_TW_Suffix = {
-    'edu': None,
-    'gov': None,
-    'mil': None,
-    'com': None,
-    'net': None,
-    'org': None,
-    'idv': None,
-    'game': None,
-    'ebiz': None,
-    'club': None
-}
-
-g_CCTLD_HK_Suffix = {
-    'com': None,
-    'edu': None,
-    'gov': None,
-    'idv': None,
-    'net': None,
-    'org': None
-}
-
-g_CCTLD_MO_Suffix = {
-    'com': None,
-    'edu': None,
-    'gov': None,
-    'net': None,
-    'org': None
-}
-
-
-def IsNumStr(astr):
-    try:
-        int(astr)
-    except:
-        return False
+    raw_host.lower()
+    port = 80
+    if ":" in raw_host:
+        try:
+            (host, port) = raw_host.split(':')
+        except ValueError:
+            raise ValueError('Too many ":" in %s' % raw_host)
     else:
-        return True
-
-
-def GetFirstLevelDomain(host):
-
-    host = host.lower()
-    pColon = host.find(':')
-    if pColon != -1:
-        port = host[pColon:]
-        host = host[:pColon]
+        host = raw_host
+    
+    rev = host.split(".")[::-1]
+    
+    if rev[0] in GENERAL_TLD:
+        rev = rev[:2]
+    elif len(rev[0].decode('utf-8')) == 2:
+        if rev[1] in GENERAL_TLD+REGOIN_TLD.get(rev[0], []):
+            rev = rev[:3]
+        else:
+            rev = rev[:2]
     else:
-        port = None
-    try:
-        if host[-1] == '.':
-            host = host[:-1]
-        if host == '':
-            return ''
-    except:
-        return ''
+        raise ValueError('Not valid domain')
 
-    hostMembers = host.split('.')
-    size = len(hostMembers)
-    pos = -1
-
-    if hostMembers[-1] in g_GTLD_Suffix:
-        pos -= 1
-    elif hostMembers[-1] in g_GTLD_Other_Suffix:
-        pos -= 1
-    elif hostMembers[-1] == 'cn':
-        pos -= 1
-        if hostMembers[-2] in g_CCTLD_CN_Suffix:
-            pos -= 1
-    elif hostMembers[-1] == 'tw':
-        pos -= 1
-        if hostMembers[-2] in g_CCTLD_TW_Suffix:
-            pos -= 1
-    elif hostMembers[-1] == 'hk':
-        pos -= 1
-        if hostMembers[-2] in g_CCTLD_HK_Suffix:
-            pos -= 1
-    elif hostMembers[-1] == 'mo':
-        pos -= 1
-        if hostMembers[-2] in g_CCTLD_MO_Suffix:
-            pos -= 1
-    elif (size == 4) and IsNumStr(hostMembers[-1]):
-        pos = 0
-    else:
-        pos = size
-
-    firstLevelDomain = '.'.join(hostMembers[pos:])
-    if port is not None:
-        firstLevelDomain += port
-
-    return firstLevelDomain
+    return ".".join(rev[::-1])
 
 
 if __name__ == '__main__':
