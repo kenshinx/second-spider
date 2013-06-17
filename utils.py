@@ -1,7 +1,7 @@
 import re
 import urllib
 import urlparse
-from pyquery import PyQuery 
+from pyquery import PyQuery
 import domain
 import unittest
 
@@ -22,13 +22,13 @@ class HtmlAnalyzer(object):
                     return charset
                 if key == "content":
                     try:
-                        p = re.match(r".+charset=(.*)\W*",meta.get('content'))
+                        p = re.match(r".+charset=(.*)\W*", meta.get('content'))
                         return p.group(1)
                     except:
                         continue
 
     @staticmethod
-    def extractLinks(html,baseurl,charset):
+    def extractLinks(html, baseurl, charset):
 
         def _extract(url):
             link = url.attrib['href']
@@ -37,19 +37,18 @@ class HtmlAnalyzer(object):
             if link is None:
                 raise
 
-            link = urlparse.urljoin(baseurl,link)
+            link = urlparse.urljoin(baseurl, link)
             link = urlparse.urldefrag(link)[0]
 
             try:
                 link = urllib.quote(link, ':?=+&#/@')
-            except (UnicodeDecodeError,KeyError):
+            except (UnicodeDecodeError, KeyError):
                 try:
                     link = urllib.quote(link.encode(charset), ':?=+&#/@')
                 except:
                     pass
 
             return link
-
 
         def _isValidLink(url):
             try:
@@ -73,56 +72,54 @@ class HtmlAnalyzer(object):
             continue
 
 
-
-
 class UrlFilter(object):
 
-    invalid_chars = {'\'':None,
-                     '\"':None,
-                     '\\':None,
-                     ' ' :None,
-                     '\n':None,
-                     '\r':None,
-                     '+' :None
+    invalid_chars = {'\'': None,
+                     '\"': None,
+                     '\\': None,
+                     ' ': None,
+                     '\n': None,
+                     '\r': None,
+                     '+': None
                      }
 
     invalid_extention = {
-                    'jpg'  :  None,
-                    'gif'  :  None,
-                    'bmp'  :  None,
-                    'jpeg' :  None,
-                    'png'  :  None,
+        'jpg':  None,
+        'gif':  None,
+        'bmp':  None,
+        'jpeg':  None,
+        'png':  None,
 
-                    'swf'  :  None,
-                    'mp3'  :  None,
-                    'wma'  :  None,
-                    'wmv'  :  None,
-                    'wav'  :  None,
-                    'mid'  :  None,
-                    'ape'  :  None,
-                    'mpg'  :  None,
-                    'mpeg' :  None,
-                    'rm'   :  None,
-                    'rmvb' :  None,
-                    'avi'  :  None,
-                    'mkv'  :  None,
+        'swf':  None,
+        'mp3':  None,
+        'wma':  None,
+        'wmv':  None,
+        'wav':  None,
+        'mid':  None,
+        'ape':  None,
+        'mpg':  None,
+        'mpeg':  None,
+        'rm':  None,
+        'rmvb':  None,
+        'avi':  None,
+        'mkv':  None,
 
-                    'zip'  :  None,
-                    'rar'  :  None,
-                    'gz'   :  None,
-                    'iso'  :  None,
-                    'jar'  :  None,
+        'zip':  None,
+        'rar':  None,
+        'gz':  None,
+        'iso':  None,
+        'jar':  None,
 
-                    'doc'  :  None,
-                    'docx' :  None,
-                    'ppt'  :  None,
-                    'pptx' :  None,
-                    'chm'  :  None,
-                    'pdf'  :  None,
+        'doc':  None,
+        'docx':  None,
+        'ppt':  None,
+        'pptx':  None,
+        'chm':  None,
+        'pdf':  None,
 
-                    'exe'  :  None,
-                    'msi'  :  None,
-                }
+        'exe':  None,
+        'msi':  None,
+    }
 
     @staticmethod
     def checkScheme(url):
@@ -130,7 +127,7 @@ class UrlFilter(object):
         return scheme in ('http', 'https')
 
     @classmethod
-    def checkInvalidChar(cls,url):
+    def checkInvalidChar(cls, url):
         exist_invalid_char = False
         for c in url:
             if c in cls.invalid_chars:
@@ -139,17 +136,16 @@ class UrlFilter(object):
         return (not exist_invalid_char)
 
     @classmethod
-    def checkInvalidExtention(cls,url):
+    def checkInvalidExtention(cls, url):
         dotpos = url.rfind('.') + 1
         typestr = url[dotpos:].lower()
         return (typestr not in cls.invalid_extention)
-
 
     @staticmethod
     def isSameDomain(first_url, second_url):
         fhost = urlparse.urlparse(first_url).netloc
         shost = urlparse.urlparse(second_url).netloc
-        return (domain.GetFirstLevelDomain(fhost) == 
+        return (domain.GetFirstLevelDomain(fhost) ==
                 domain.GetFirstLevelDomain(shost))
 
     @staticmethod
@@ -168,7 +164,7 @@ class UrlFilter(object):
             return True
         else:
             return False
-        
+
     # check whether first_url has the suffix second_url
     @staticmethod
     def isSameSuffix(first_url, second_url):
@@ -179,6 +175,7 @@ class UrlFilter(object):
             return True
         else:
             return False
+
 
 class TestHtmlAnalyzer(unittest.TestCase):
 
@@ -193,13 +190,13 @@ class TestHtmlAnalyzer(unittest.TestCase):
 
     def testDetectCharSet(self):
         charset = HtmlAnalyzer.detectCharSet(self.html)
-        self.assertEqual(charset ,self.charset)
+        self.assertEqual(charset, self.charset)
 
     def testExtractLinks(self):
         links = []
-        for link in HtmlAnalyzer.extractLinks(self.html,self.url,self.charset):
+        for link in HtmlAnalyzer.extractLinks(self.html, self.url, self.charset):
             links.append(link)
-        self.assertGreater(len(links),1000)
+        self.assertGreater(len(links), 1000)
 
 
 class TestUrlFilter(unittest.TestCase):
@@ -211,7 +208,7 @@ class TestUrlFilter(unittest.TestCase):
         self.assert_(UrlFilter.checkScheme(url1))
         self.assertFalse(UrlFilter.checkScheme(url2))
         self.assertFalse(UrlFilter.checkScheme(url3))
-    
+
     def testCheckInvalidChar(self):
         url1 = "http://www.sina.com.cn"
         url2 = "http://www.sina.com.cn+"
@@ -228,35 +225,30 @@ class TestUrlFilter(unittest.TestCase):
         url1 = "http://www.sina.com.cn"
         url2 = "http://www.sina.com"
         url3 = "http://news.sina.com.cn"
-        self.assertFalse(UrlFilter.isSameDomain(url1,url2))
-        self.assert_(UrlFilter.isSameDomain(url1,url3))
+        self.assertFalse(UrlFilter.isSameDomain(url1, url2))
+        self.assert_(UrlFilter.isSameDomain(url1, url3))
 
     def testIsSameHost(self):
         url1 = "http://www.sina.com.cn"
         url2 = "http://news.sina.com.cn"
         url3 = "http://www.sina.com.cn/news/"
-        self.assertFalse(UrlFilter.isSameHost(url1,url2))
-        self.assert_(UrlFilter.isSameHost(url1,url3))
+        self.assertFalse(UrlFilter.isSameHost(url1, url2))
+        self.assert_(UrlFilter.isSameHost(url1, url3))
 
     def testIsSameSuffixWithoutWWW(self):
         url1 = "http://news.sina.com.cn"
         url2 = "http://www.news.sina.com.cn"
         url3 = "http://www.sina.com.cn"
-        self.assert_(UrlFilter.isSameSuffixWithoutWWW(url1,url2))
-        self.assert_(UrlFilter.isSameSuffixWithoutWWW(url1,url3))
+        self.assert_(UrlFilter.isSameSuffixWithoutWWW(url1, url2))
+        self.assert_(UrlFilter.isSameSuffixWithoutWWW(url1, url3))
 
     def testIsSameSuffix(self):
         url1 = "http://news.sina.com.cn"
         url2 = "http://www.news.sina.com.cn"
         url3 = "http://sina.com.cn"
-        self.assertFalse(UrlFilter.isSameSuffix(url1,url2))
-        self.assert_(UrlFilter.isSameSuffix(url1,url3))
+        self.assertFalse(UrlFilter.isSameSuffix(url1, url2))
+        self.assert_(UrlFilter.isSameSuffix(url1, url3))
 
 
 if __name__ == '__main__':
     unittest.main()
-
-        
-
-
-

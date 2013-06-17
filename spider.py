@@ -1,4 +1,4 @@
-#coding:utf-8
+# coding:utf-8
 import gevent
 from gevent import (monkey,
                     queue,
@@ -15,10 +15,10 @@ import urlparse
 import requests
 from pyquery import PyQuery
 
-from utils import HtmlAnalyzer,UrlFilter
+from utils import HtmlAnalyzer, UrlFilter
 
 
-__all__ = ['Strategy','UrlObj','Spider','HtmlAnalyzer','UrlFilter']
+__all__ = ['Strategy', 'UrlObj', 'Spider', 'HtmlAnalyzer', 'UrlFilter']
 
 
 class Strategy(object):
@@ -32,8 +32,9 @@ class Strategy(object):
         'Accept-Charset': 'GBK,utf-8;q=0.7,*;q=0.3',
     }
 
-    def __init__(self,max_depth=5,max_count=5000,concurrency=5,timeout=10,headers=None,
-                        cookies=None,ssl_verify=False,same_host=False,same_domain=True):
+    def __init__(
+        self, max_depth=5, max_count=5000, concurrency=5, timeout=10, headers=None,
+            cookies=None, ssl_verify=False, same_host=False, same_domain=True):
         self.max_depth = max_depth
         self.max_count = max_count
         self.concurrency = concurrency
@@ -47,12 +48,11 @@ class Strategy(object):
         self.same_domain = same_domain
 
 
-
 class UrlObj(object):
 
-    def __init__(self,url,depth=0,linkin=None):
+    def __init__(self, url, depth=0, linkin=None):
         if not url.startswith("http"):
-            url = "http://"+url
+            url = "http://" + url
         self.url = url.strip('/')
         self.depth = depth
         self.linkin = linkin
@@ -61,12 +61,12 @@ class UrlObj(object):
         return self.url
 
     def __repr__(self):
-        return "<Url object: %s>" %self.url
+        return "<Url object: %s>" % self.url
 
     def __hash__(self):
         return hash(self.url)
 
-    def setLinkin(self,urlobj):
+    def setLinkin(self, urlobj):
         self.linkin = urlobj
 
     def incrDepth(self):
@@ -77,63 +77,60 @@ class UrlTable(object):
 
     infinite = float("inf")
 
-    def __init__(self,size=0):
+    def __init__(self, size=0):
         self.__urls = {}
-        if size == 0 :
-            size = self.infinite    
+        if size == 0:
+            size = self.infinite
         self.size = size
 
     def __len__(self):
         return len(self.__urls)
 
-    def __contains__(self,url):
+    def __contains__(self, url):
         return hash(url) in self.__urls.keys()
 
     def __iter__(self):
         for url in self.urls:
             yield url
 
-    def insert(self,url):
+    def insert(self, url):
         if isinstance(url, basestring):
             url = UrlObj(url)
         if url not in self:
-            self.__urls.setdefault(hash(url),url)
+            self.__urls.setdefault(hash(url), url)
 
     @property
     def urls(self):
         return self.__urls.values()
 
-
     def full(self):
         return len(self) >= self.size
 
-    
+
 class Spider(object):
 
     logger = logging.getLogger("spider.mainthread")
 
-    def __init__(self,strategy=Strategy()):
+    def __init__(self, strategy=Strategy()):
         self.strategy = strategy
         self.queue = queue.Queue()
         self.urltable = UrlTable(strategy.max_count)
         self.pool = pool.Pool(strategy.concurrency)
         self.greenlet_finished = event.Event()
         self._stop = event.Event()
-        
-       
-    def setRootUrl(self,url):
-        if isinstance(url,basestring):
+
+    def setRootUrl(self, url):
+        if isinstance(url, basestring):
             url = UrlObj(url)
         self.root = url
         self.put(self.root)
 
-    def put(self,url):
+    def put(self, url):
         if url not in self.urltable:
             self.queue.put(url)
 
-
     def run(self):
-        self.logger.info("spider '%s' begin running",self.root)
+        self.logger.info("spider '%s' begin running", self.root)
         while not self.stopped():
             for greenlet in list(self.pool):
                 if greenlet.dead:
@@ -147,37 +144,33 @@ class Spider(object):
                     continue
                 else:
                     self.stop()
-            greenlet = Handler(url,self)
+            greenlet = Handler(url, self)
             self.pool.start(greenlet)
-
 
     def stopped(self):
         return self._stop.is_set()
 
-
     def stop(self):
-        self.logger.info("spider '%s' finished. fetch total (%d) urls",self.root,len(self.urltable))
+        self.logger.info(
+            "spider '%s' finished. fetch total (%d) urls", self.root, len(self.urltable))
         self._stop.set()
         self.pool.join()
         self.queue.put(StopIteration)
         return
 
-
     def dump(self):
         import StringIO
         out = StringIO.StringIO()
         for url in self.urltable:
-            print >> out ,url
+            print >> out, url
         return out.getvalue()
-
-
 
 
 class Handler(gevent.Greenlet):
 
     logger = logging.getLogger("spider.handler")
 
-    def __init__(self,urlobj,spider):
+    def __init__(self, urlobj, spider):
         gevent.Greenlet.__init__(self)
         self.urlobj = urlobj
         self.spider = spider
@@ -190,10 +183,10 @@ class Handler(gevent.Greenlet):
 
         try:
             html = self.open(self.urlobj.url)
-        except Exception,why:
-            self.logger.debug("open '%s' failed,since : %s",self.urlobj,why)
+        except Exception, why:
+            self.logger.debug("open '%s' failed,since : %s", self.urlobj, why)
             return self.stop()
-        
+
         linkin = self.urlobj
         depth = linkin.depth + 1
 
@@ -209,29 +202,29 @@ class Handler(gevent.Greenlet):
 
             if link in urltable:
                 continue
-            
-            if strategy.same_host and (not UrlFilter.isSameHost(link,linkin.url)):
+
+            if strategy.same_host and (not UrlFilter.isSameHost(link, linkin.url)):
                 continue
 
-            if strategy.same_domain and (not UrlFilter.isSameDomain(link,linkin.url)):
+            if strategy.same_domain and (not UrlFilter.isSameDomain(link, linkin.url)):
                 continue
 
-            url = UrlObj(link,depth,linkin)
+            url = UrlObj(link, depth, linkin)
             urltable.insert(url)
             queue.put(url)
 
-            self.logger.debug("sucess crawled '%s' the <%d> urls",url,len(urltable))
+            self.logger.debug(
+                "sucess crawled '%s' the <%d> urls", url, len(urltable))
 
         self.stop()
 
-
-    def open(self,url):
+    def open(self, url):
         strategy = self.spider.strategy
         try:
-            resp = requests.get(url,headers=strategy.headers,
-                                cookies=strategy.cookies,timeout=strategy.timeout,
+            resp = requests.get(url, headers=strategy.headers,
+                                cookies=strategy.cookies, timeout=strategy.timeout,
                                 verify=strategy.ssl_verify)
-        except requests.exceptions.RequestException,e:
+        except requests.exceptions.RequestException, e:
             raise e
         if resp.status_code != requests.codes.ok:
             resp.raise_for_status()
@@ -241,45 +234,41 @@ class Handler(gevent.Greenlet):
             resp.encoding = charset
         return resp.text
 
+    def feed(self, html):
+        return HtmlAnalyzer.extractLinks(html, self.urlobj.url, self.charset)
 
-    def feed(self,html):
-        return HtmlAnalyzer.extractLinks(html,self.urlobj.url,self.charset)
-
-        
     def stop(self):
         self.spider.greenlet_finished.set()
         self.kill(block=False)
-        
 
 
 class TestSpider(unittest.TestCase):
 
     def setUp(self):
         self.root = "http://www.sina.com.cn"
-        strategy = Strategy(max_depth=3,max_count=5000,
-                            same_host=False,same_domain=True)
+        strategy = Strategy(max_depth=3, max_count=5000,
+                            same_host=False, same_domain=True)
         self.spider = Spider(strategy)
         self.spider.setRootUrl(self.root)
         self.spider.run()
 
     def testCount(self):
-        self.assertEqual(len(self.spider.urltable),5000)
+        self.assertEqual(len(self.spider.urltable), 5000)
 
     def testMaxDepth(self):
-        self.assertLessEqual(self.spider.urltable.urls[-1].depth,3)
+        self.assertLessEqual(self.spider.urltable.urls[-1].depth, 3)
 
     def testSameDomain(self):
         for url in self.spider.urltable.urls[100:200]:
-            self.assert_(UrlFilter.isSameDomain(self.root,str(url)))
+            self.assert_(UrlFilter.isSameDomain(self.root, str(url)))
 
     def testSameHost(self):
         pass
 
 
-
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG if "-v" in sys.argv else logging.WARN,
-                        format='%(asctime)s %(levelname)s %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG if "-v" in sys.argv else logging.WARN,
+        format='%(asctime)s %(levelname)s %(message)s')
 
     unittest.main()
-
