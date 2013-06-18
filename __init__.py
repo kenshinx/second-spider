@@ -4,4 +4,4 @@ __version__ = (0, 1, 1)
 
 __title__ = "Second Spider"
 
-__author__ = "kenshin"
+__author__ = ("keshin","jetz")
