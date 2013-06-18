@@ -34,10 +34,10 @@ class HtmlAnalyzer(object):
     @staticmethod
     def extractLinks(html, baseurl, charset):
 
-        def _extract(url):
-            link = url.attrib['href']
-
-            link = link.strip("/ ")
+        def _extract(url, attr):
+            link = url.attrib[attr]
+            # strip('\\"') for href like <a href=\"http://www.sina.com.cn\">Sina</a>
+            link = link.strip("/ ").strip('\\"')
             if link is None:
                 raise
 
@@ -65,15 +65,24 @@ class HtmlAnalyzer(object):
 
         pq = PyQuery(html)
 
+        allLinks = []
+
         for url in pq('a'):
             try:
-                link = _extract(url)
+                link = _extract(url, 'href')
             except:
                 continue
-
             if _isValidLink(link):
-                yield link
-            continue
+                allLinks.append(link)
+
+        for url in pq('form'):
+            try:
+                link = _extract(url, 'action')
+            except:
+                continue
+            if _isValidLink(link):
+                allLinks.append(link)
+        return allLinks
 
 
 class UniqRule(object):
