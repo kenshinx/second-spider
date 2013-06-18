@@ -1,7 +1,7 @@
 second-spider
 =============
 
-Another spider, powered by gevent,requests,pyquery 
+Another parallel spider, powered by gevent,requests,pyquery 
 
 ### Features
 
@@ -9,12 +9,13 @@ Another spider, powered by gevent,requests,pyquery
 2. The spider strategy highly configurable:
 
 > 
-* max depth 
-* the count of urls you want fetch 
-* the max concurrency of http request,avoid dos
-* the http request headers and cookie can be set
-* just crawl same host url
-* just crawl same domain url
+* Max depth 
+* Sum totals of urls
+* Max concurrency of http request,avoid dos
+* Request headers and cookies
+* Only crawl same host url
+* Only crawl same domain url
+* Max running time
 
 
 ### Install
@@ -30,4 +31,19 @@ Another spider, powered by gevent,requests,pyquery
         spider = Spider()
         spider.setRootUrl("http://www.sina.com.cn")
         spider.run()
+
+
+### TODO
+
+* Support Distributed , update `gevent.Queue` -> `redis.Queue`
+* Storage system highly configurable
+* Support Ajax url (webkit etc..)
+
+
+### LICENSE
+
+Copyright © 2013 by kenshin
+
+Under MIT license : [rem.mit-license.org](http://rem.mit-license.org/)
+
 
