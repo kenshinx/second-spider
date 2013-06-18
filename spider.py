@@ -4,7 +4,6 @@ from gevent import (monkey,
                     queue,
                     event,
                     pool)
-monkey.patch_all()
 
 import re
 import sys
@@ -13,10 +12,9 @@ import unittest
 import urllib
 import urlparse
 import requests
+from threading import Timer
 from pyquery import PyQuery
-
 from utils import HtmlAnalyzer,UrlFilter
-
 
 __all__ = ['Strategy','UrlObj','Spider','HtmlAnalyzer','UrlFilter']
 
@@ -32,12 +30,13 @@ class Strategy(object):
         'Accept-Charset': 'GBK,utf-8;q=0.7,*;q=0.3',
     }
 
-    def __init__(self,max_depth=5,max_count=5000,concurrency=5,timeout=10,headers=None,
-                        cookies=None,ssl_verify=False,same_host=False,same_domain=True):
+    def __init__(self,max_depth=5,max_count=5000,concurrency=5,timeout=10,time=6*3600,headers=None,
+                 cookies=None,ssl_verify=False,same_host=False,same_domain=True):
         self.max_depth = max_depth
         self.max_count = max_count
         self.concurrency = concurrency
         self.timeout = timeout
+        self.time = time
         self.headers = self.default_headers
         self.headers.update(headers or {})
         self.cookies = self.default_cookies
@@ -80,7 +79,7 @@ class UrlTable(object):
     def __init__(self,size=0):
         self.__urls = {}
         if size == 0 :
-            size = self.infinite    
+            size = self.infinite
         self.size = size
 
     def __len__(self):
@@ -107,20 +106,21 @@ class UrlTable(object):
     def full(self):
         return len(self) >= self.size
 
-    
+
 class Spider(object):
 
     logger = logging.getLogger("spider.mainthread")
 
     def __init__(self,strategy=Strategy()):
+        monkey.patch_all()
         self.strategy = strategy
         self.queue = queue.Queue()
         self.urltable = UrlTable(strategy.max_count)
         self.pool = pool.Pool(strategy.concurrency)
         self.greenlet_finished = event.Event()
         self._stop = event.Event()
-        
-       
+
+
     def setRootUrl(self,url):
         if isinstance(url,basestring):
             url = UrlObj(url)
@@ -133,8 +133,11 @@ class Spider(object):
 
 
     def run(self):
+        self.timer = Timer(self.strategy.time, self.stop)
+        self.timer.start()
         self.logger.info("spider '%s' begin running",self.root)
-        while not self.stopped():
+
+        while not self.stopped() and self.timer.isAlive():
             for greenlet in list(self.pool):
                 if greenlet.dead:
                     self.pool.discard(greenlet)
@@ -157,6 +160,7 @@ class Spider(object):
 
     def stop(self):
         self.logger.info("spider '%s' finished. fetch total (%d) urls",self.root,len(self.urltable))
+        self.timer.cancel()
         self._stop.set()
         self.pool.join()
         self.queue.put(StopIteration)
@@ -167,7 +171,10 @@ class Spider(object):
         import StringIO
         out = StringIO.StringIO()
         for url in self.urltable:
-            print >> out ,url
+            try:
+                print >> out ,url
+            except:
+                continue
         return out.getvalue()
 
 
@@ -193,7 +200,7 @@ class Handler(gevent.Greenlet):
         except Exception,why:
             self.logger.debug("open '%s' failed,since : %s",self.urlobj,why)
             return self.stop()
-        
+
         linkin = self.urlobj
         depth = linkin.depth + 1
 
@@ -209,7 +216,7 @@ class Handler(gevent.Greenlet):
 
             if link in urltable:
                 continue
-            
+
             if strategy.same_host and (not UrlFilter.isSameHost(link,linkin.url)):
                 continue
 
@@ -245,11 +252,11 @@ class Handler(gevent.Greenlet):
     def feed(self,html):
         return HtmlAnalyzer.extractLinks(html,self.urlobj.url,self.charset)
 
-        
+
     def stop(self):
         self.spider.greenlet_finished.set()
         self.kill(block=False)
-        
+
 
 
 class TestSpider(unittest.TestCase):
@@ -281,5 +288,9 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if "-v" in sys.argv else logging.WARN,
                         format='%(asctime)s %(levelname)s %(message)s')
 
+    url = 'http://qipai.sina.com.cn'
+    spider = Spider()
+    spider.setRootUrl(url)
+    spider.run()
+    print len(spider.urltable.urls)
     unittest.main()
-
