@@ -1,8 +1,12 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
 import re
 import urllib
 import urlparse
 from pyquery import PyQuery
 import domain
+import os.path
 import unittest
 
 
@@ -70,6 +74,128 @@ class HtmlAnalyzer(object):
             if _isValidLink(link):
                 yield link
             continue
+
+
+class UniqRule(object):
+
+    # 用于形如abc123格式
+    alnum = re.compile(r'^(\D+)(\d+)$')
+
+    date = re.compile(r'^([12]\d)?\d\d-\d{1,2}(-\d{1,2})?$')
+
+    connector = '|'
+
+    # 相同后缀名
+    ext = {
+        '.asp':  '.asp',
+        '.aspx': '.asp',
+        '.jsp':  '.jsp',
+        '.jspx': '.jsp',
+    }
+
+    scheme = {
+        'http':  'http',
+        'https': 'http'
+    }
+
+    normalize_dict = {
+        'digit':  '1',
+        'letter': 'a',
+        'date':   '2013-01-01',
+    }
+
+    def __init__(self, depth=None):
+        self.depth = depth
+
+    def is_digit(self, param):
+        return param.isdigit()
+
+    def is_letter(self, param):
+        return len(param) == 1 and param.isalpha()
+
+    def is_alnum(self, param):
+        if UniqRule.alnum.match(param):
+            return True
+        return False
+
+    # 形如abc-123-453
+    def is_hyphen_split(self, param):
+        return not param.find('-') == -1
+
+    def is_underscore_split(self, param):
+        return not param.find('_') == -1
+
+    def is_date(self, param):
+        if UniqRule.date.match(param):
+            return True
+        return False
+
+    def split_params(self, pathnode):
+        name_params = pathnode.split(';')
+        if len(name_params) > 1:
+            return name_params[0], name_params[1:]
+        else:
+            return name_params[0], []
+
+    def normalize(self, param):
+        if self.is_digit(param):
+            return UniqRule.normalize_dict['digit']
+        elif self.is_letter(param):
+            return UniqRule.normalize_dict['letter']
+        elif self.is_date(param):
+            return UniqRule.normalize_dict['date']
+        elif self.is_alnum(param):
+            match = UniqRule.alnum.match(param)
+            return match.group(1) + UniqRule.normalize_dict['digit']
+        elif self.is_hyphen_split(param):
+            params = param.split('-')
+            for k, v in enumerate(params):
+                if v.isdigit():
+                    params[k] = UniqRule.normalize_dict['digit']
+            return '-'.join(params)
+        elif self.is_underscore_split(param):
+            params = param.split('_')
+            for k, v in enumerate(params):
+                if v.isdigit():
+                    params[k] = UniqRule.normalize_dict['digit']
+            return '_'.join(params)
+        else:
+            return param
+
+    ############################################################
+
+    def is_depth_set(self):
+        return self.depth is not None
+
+    def normalize_scheme(self, scheme):
+        return UniqRule.scheme.get(scheme, scheme)
+
+    def normalize_hostname(self, hostname):
+        return hostname
+
+    def normalize_dirs(self, dir_list):
+        dir_depth = len(dir_list)
+        if self.is_depth_set() and self.depth <= dir_depth:
+            return UniqRule.connector.join([self.normalize(dir_list[i])
+                                            for i in xrange(self.depth)])
+        return UniqRule.connector.join([self.normalize(dir_list[i])
+                                        for i in xrange(dir_depth)])
+
+    def normalize_tailpage(self, tailpage):
+        try:
+            tpname, params = self.split_params(tailpage)
+        except IndexError:
+            return tailpage
+        fname, ext = os.path.splitext(tpname)
+        norm_name = self.normalize(fname)
+        norm_ext = UniqRule.ext.get(ext, ext)
+        norm_params = sorted(params)
+        result = [norm_name, norm_ext]
+        result.extend(norm_params)
+        return UniqRule.connector.join(result)
+
+    def normalize_querykeys(self, querykeys):
+        return UniqRule.connector.join(sorted(querykeys))
 
 
 class UrlFilter(object):
@@ -175,6 +301,20 @@ class UrlFilter(object):
             return True
         else:
             return False
+
+
+    # remove similary urls
+    @staticmethod
+    def uniq(urls, rule=UniqRule()):
+        result = {}
+        for u in urls:
+            try:
+                urlobj = UrlObject(u, rule)
+            except Exception:
+                result[hash(u)] = u
+                continue
+            result.setdefault(urlobj.hashcode, u)
+        return result.values()
 
 
 class TestHtmlAnalyzer(unittest.TestCase):
