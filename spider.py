@@ -264,28 +264,16 @@ class TestSpider(unittest.TestCase):
         self.spider.setRootUrl(self.root)
         self.spider.run()
 
-    def testCount(self):
+    def testSpiderStrategy(self):
         self.assertEqual(len(self.spider.urltable), 5000)
-
-    def testMaxDepth(self):
         self.assertLessEqual(self.spider.urltable.urls[-1].depth, 3)
-
-    def testSameDomain(self):
         for url in self.spider.urltable.urls[100:200]:
             self.assert_(UrlFilter.isSameDomain(self.root, str(url)))
 
-    def testSameHost(self):
-        pass
 
 
 if __name__ == '__main__':
     logging.basicConfig(
         level=logging.DEBUG if "-v" in sys.argv else logging.WARN,
         format='%(asctime)s %(levelname)s %(message)s')
-
-    url = 'http://qipai.sina.com.cn'
-    spider = Spider()
-    spider.setRootUrl(url)
-    spider.run()
-    print len(spider.urltable.urls)
     unittest.main()
