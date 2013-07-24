@@ -18,15 +18,15 @@ Another parallel spider, powered by gevent,requests,pyquery
 * Max running time
 
 
-### Install
+### Dependencies
 
 * python 2.7
-* gevent
-* requests
-* pyquery
+* gevent 1.0dev
+* requests 1.0.3
+* pyquery 1.2.4
 
 
-### Usage
+### Example
 
         spider = Spider()
         spider.setRootUrl("http://www.sina.com.cn")
