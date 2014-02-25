@@ -1,7 +1,7 @@
 second-spider
 =============
 
-Another parallel spider, powered by gevent,requests,pyquery 
+Another concurrency spider, powered by gevent,requests,pyquery 
 
 ### Features
 
