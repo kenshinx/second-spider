@@ -21,7 +21,8 @@ A simple python gevent concurrency spider
 ### Dependencies
 
 * python 2.7
-* gevent 1.0dev
+~~* gevent 1.0dev~~
+* [gevent 1.0 final](https://github.com/surfly/gevent/releases/tag/1.0)
 * requests 1.0.3
 * pyquery 1.2.4
 
