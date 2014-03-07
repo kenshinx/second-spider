@@ -1,7 +1,7 @@
 second-spider
 =============
 
-Another concurrency spider, powered by gevent,requests,pyquery 
+A simple python gevent concurrency spider
 
 ### Features
 
@@ -13,8 +13,8 @@ Another concurrency spider, powered by gevent,requests,pyquery
 * Sum totals of urls
 * Max concurrency of http request,avoid dos
 * Request headers and cookies
-* Only crawl same host url
-* Only crawl same domain url
+* Same host strategy
+* Same domain strategy
 * Max running time
 
 
@@ -26,17 +26,33 @@ Another concurrency spider, powered by gevent,requests,pyquery
 * pyquery 1.2.4
 
 
+### Test
+
+```
+python spider.py -v
+```
+
 ### Example
 
-        spider = Spider()
-        spider.setRootUrl("http://www.sina.com.cn")
-        spider.run()
+```
+import logging
+from spider  import Spider
+
+logging.basicConfig(
+        level=logging.DEBUG ,
+        format='%(asctime)s %(levelname)s %(message)s')
+
+spider = Spider()
+spider.setRootUrl("http://www.sina.com.cn")
+spider.run()
+
+```
 
 
 ### TODO
 
 * Support Distributed , update `gevent.Queue` -> `redis.Queue`
-* Storage system highly configurable
+* Storage backend highly configurable
 * Support Ajax url (webkit etc..)
 
 
